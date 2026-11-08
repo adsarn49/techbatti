@@ -171,8 +171,8 @@
     <div id="auth-section" class="card">
         <h2 id="auth-mode-title">பணியாளர் உள்நுழைவு</h2>
         <form id="auth-form">
-            <label for="email">மின்னஞ்சல் (Email):</label>
-            <input type="email" id="email" placeholder="example@email.com" required>
+            <label for="username">பெயர் (Username):</label>
+            <input type="text" id="username" placeholder="உங்கள் பெயரை உள்ளிடவும்" required>
             
             <label for="password">கடவுச்சொல் (Password):</label>
             <input type="password" id="password" placeholder="குறைந்தது 6 இலக்கங்கள்" required>
@@ -223,15 +223,15 @@
 </div>
 
 <script>
-    // உங்கள் Firebase உள்ளமைவு விவரங்கள் (Configuration)
-   const firebaseConfig = {
-  apiKey: "AIzaSyAXhj3sBdf-mZPQtnhW8O64Z5pGfK1RxoM",
-  authDomain: "techbatti.firebaseapp.com",
-  projectId: "techbatti",
-  storageBucket: "techbatti.firebasestorage.app",
-  messagingSenderId: "820329640597",
-  appId: "1:820329640597:web:2ed5e17b8774c125c4219c"
-};
+    // உங்கள் Firebase உள்ளமைவு விவரங்கள்
+    const firebaseConfig = {
+        apiKey: "AIzaSyAXhj3s8df-mZPQtnhW8064Z5pGfK1RxoM",
+        authDomain: "techbatti.firebaseapp.com",
+        projectId: "techbatti",
+        storageBucket: "techbatti.firebasestorage.app",
+        messagingSenderId: "820329640597",
+        appId: "1:820329640597:web:2ed5e17b8774c125c4219c"
+    };
 
     // Firebase ஆரம்பிக்கப்படுகிறது
     firebase.initializeApp(firebaseConfig);
@@ -245,7 +245,7 @@
     const authSection = document.getElementById('auth-section');
     const appSection = document.getElementById('app-section');
     const authForm = document.getElementById('auth-form');
-    const emailInput = document.getElementById('email');
+    const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
     const authSubmitBtn = document.getElementById('auth-submit-btn');
     const toggleAuthMode = document.getElementById('toggle-auth-mode');
@@ -255,10 +255,11 @@
     const taskForm = document.getElementById('task-form');
     const taskList = document.getElementById('task-list');
 
-    // பயனர் நிலை மாறும்போது (Login / Logout) தானாக இயங்கும்
+    // பயனர் நிலை மாறும்போது இயங்கும்
     auth.onAuthStateChanged((user) => {
         if (user) {
-            currentUser = user.email;
+            // மின்னஞ்சலில் இருந்து யூசர்நேமை மட்டும் பிரித்து எடுத்தல்
+            currentUser = user.email.split('@')[0];
             showApp();
         } else {
             currentUser = null;
@@ -280,14 +281,15 @@
         }
     });
 
-    // Login மற்றும் Register செயல்பாடு
+    // Login மற்றும் Register செயல்பாடு (Username-ஐ Email-ஆக மாற்றி ஃபயர்பேஸுக்கு அனுப்புதல்)
     authForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        const email = emailInput.value.trim();
+        const username = usernameInput.value.trim().toLowerCase();
         const password = passwordInput.value;
+        const fakeEmail = `${username}@techbatti.local`;
 
         if (isRegisterMode) {
-            auth.createUserWithEmailAndPassword(email, password)
+            auth.createUserWithEmailAndPassword(fakeEmail, password)
                 .then((userCredential) => {
                     alert('பதிவு வெற்றிகரமாக முடிந்தது!');
                 })
@@ -295,12 +297,12 @@
                     alert('பிழை: ' + error.message);
                 });
         } else {
-            auth.signInWithEmailAndPassword(email, password)
+            auth.signInWithEmailAndPassword(fakeEmail, password)
                 .then((userCredential) => {
                     // Login Success
                 })
                 .catch((error) => {
-                    alert('தவறான மின்னஞ்சல் அல்லது கடவுச்சொல்.');
+                    alert('தவறான பெயர் அல்லது கடவுச்சொல்.');
                 });
         }
     });
@@ -310,8 +312,8 @@
         appSection.style.display = 'block';
         currentUserDisplay.textContent = currentUser;
         
-        // அட்மின் மின்னஞ்சல் சரிபார்ப்பு (உதாரணமாக உங்கள் மின்னஞ்சலை இங்கே கொடுக்கலாம்)
-        if (currentUser === 'kangeswaran@gmail.com' || currentUser.includes('kangeswaran')) {
+        // அட்மின் பெயர் சரிபார்ப்பு (உதாரணமாக உங்கள் பெயரை இங்கே கொடுக்கலாம்)
+        if (currentUser === 'kangeswaran') {
             adminBadge.style.display = 'inline-block';
         } else {
             adminBadge.style.display = 'none';
@@ -322,7 +324,7 @@
     function showAuth() {
         authSection.style.display = 'block';
         appSection.style.display = 'none';
-        emailInput.value = '';
+        usernameInput.value = '';
         passwordInput.value = '';
     }
 
@@ -361,10 +363,7 @@
             fileType = file.type;
         }
 
-        const isAdmin = currentUser.includes('kangeswaran');
-
         if (idInput) {
-            // Update existing task
             const taskUpdateData = { title, desc, status, date: new Date().toLocaleString() + ' (Updated)' };
             if (mediaUrl) {
                 taskUpdateData.mediaUrl = mediaUrl;
@@ -378,7 +377,6 @@
                     document.getElementById('save-task-btn').textContent = 'பதியவும்';
                 });
         } else {
-            // Add new task
             const newTask = {
                 user: currentUser,
                 title,
@@ -421,7 +419,7 @@
     function renderTasks() {
         taskList.innerHTML = '';
         
-        const isAdmin = currentUser.includes('kangeswaran');
+        const isAdmin = (currentUser === 'kangeswaran');
         let filteredTasks = tasks;
         if (!isAdmin) {
             filteredTasks = tasks.filter(task => task.user === currentUser);
@@ -438,14 +436,12 @@
             
             let badgeText = 'நிலுவையில்';
             if (task.status === 'in-progress') badgeText = 'நடைபெறுகிறது';
-            if (task.status === 'completed') badgeText = 'முடிவடைந்தது';
+            if (task.status === 'completed') badgeText  = 'முடிவடைந்தது';
 
             let mediaHtml = '';
             if (task.mediaUrl) {
                 if (task.fileType && task.fileType.startsWith('image/')) {
                     mediaHtml = `<img src="${task.mediaUrl}" class="media-preview" alt="ஆதாரம்">`;
-                } else if (task.fileType && task.fileType.startsWith('video/')) {
-                    mediaHtml = `<video src="${task.mediaUrl}" class="media-preview" controls></video>`;
                 } else {
                     if (isAdmin) {
                         mediaHtml = `<div style="margin-top: 10px;">
