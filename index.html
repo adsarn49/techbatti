@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>அலுவலக பணி கண்காணிப்பு செயலி</title>
+    
+    <!-- Firebase App (Core) SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <!-- Firebase Authentication SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <!-- Firebase Firestore SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
     <style>
         :root {
             --primary: #4f46e5;
@@ -163,11 +171,11 @@
     <div id="auth-section" class="card">
         <h2 id="auth-mode-title">பணியாளர் உள்நுழைவு</h2>
         <form id="auth-form">
-            <label for="username">பெயர்:</label>
-            <input type="text" id="username" placeholder="உங்கள் பெயரை உள்ளிடவும்" required>
+            <label for="email">மின்னஞ்சல் (Email):</label>
+            <input type="email" id="email" placeholder="example@email.com" required>
             
-            <label for="password">கடவுச்சொல்:</label>
-            <input type="password" id="password" placeholder="கடவுச்சொல்லை உள்ளிடவும்" required>
+            <label for="password">கடவுச்சொல் (Password):</label>
+            <input type="password" id="password" placeholder="குறைந்தது 6 இலக்கங்கள்" required>
             
             <button type="submit" id="auth-submit-btn">உள்நுழைய</button>
         </form>
@@ -215,15 +223,29 @@
 </div>
 
 <script>
-    let users = JSON.parse(localStorage.getItem('office_users')) || {};
-    let currentUser = localStorage.getItem('office_user') ? localStorage.getItem('office_user').toLowerCase() : null;
-    let tasks = JSON.parse(localStorage.getItem('office_tasks')) || [];
+    // உங்கள் Firebase உள்ளமைவு விவரங்கள் (Configuration)
+    const firebaseConfig = {
+        apiKey: "AIzaSyAXhj3s8df-mZPQtnhW8064Z5pGfK1RxoM",
+        authDomain: "techbatti.firebaseapp.com",
+        projectId: "techbatti",
+        storageBucket: "techbatti.firebasestorage.app",
+        messagingSenderId: "820329640597",
+        appId: "1:820329640597:web:2ed5e17b8774c125c4219c"
+    };
+
+    // Firebase ஆரம்பிக்கப்படுகிறது
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let currentUser = null;
     let isRegisterMode = false;
+    let tasks = [];
 
     const authSection = document.getElementById('auth-section');
     const appSection = document.getElementById('app-section');
     const authForm = document.getElementById('auth-form');
-    const usernameInput = document.getElementById('username');
+    const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
     const authSubmitBtn = document.getElementById('auth-submit-btn');
     const toggleAuthMode = document.getElementById('toggle-auth-mode');
@@ -233,9 +255,16 @@
     const taskForm = document.getElementById('task-form');
     const taskList = document.getElementById('task-list');
 
-    if (currentUser) {
-        showApp();
-    }
+    // பயனர் நிலை மாறும்போது (Login / Logout) தானாக இயங்கும்
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            currentUser = user.email;
+            showApp();
+        } else {
+            currentUser = null;
+            showAuth();
+        }
+    });
 
     toggleAuthMode.addEventListener('click', (e) => {
         e.preventDefault();
@@ -251,30 +280,28 @@
         }
     });
 
+    // Login மற்றும் Register செயல்பாடு
     authForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        const username = usernameInput.value.trim().toLowerCase();
+        const email = emailInput.value.trim();
         const password = passwordInput.value;
 
         if (isRegisterMode) {
-            if (users[username]) {
-                alert('இந்தப் பெயர் ஏற்கனவே உள்ளது. தயவுசெய்து உள்நுழையவும்.');
-                return;
-            }
-            users[username] = password;
-            localStorage.setItem('office_users', JSON.stringify(users));
-            alert('பதிவு வெற்றிகரமாக முடிந்தது! இப்போது உள்நுழையலாம்.');
-            toggleAuthMode.click();
-            usernameInput.value = '';
-            passwordInput.value = '';
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    alert('பதிவு வெற்றிகரமாக முடிந்தது!');
+                })
+                .catch((error) => {
+                    alert('பிழை: ' + error.message);
+                });
         } else {
-            if (!users[username] || users[username] !== password) {
-                alert('தவறான பெயர் அல்லது கடவுச்சொல்.');
-                return;
-            }
-            currentUser = username;
-            localStorage.setItem('office_user', currentUser);
-            showApp();
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    // Login Success
+                })
+                .catch((error) => {
+                    alert('தவறான மின்னஞ்சல் அல்லது கடவுச்சொல்.');
+                });
         }
     });
 
@@ -283,24 +310,38 @@
         appSection.style.display = 'block';
         currentUserDisplay.textContent = currentUser;
         
-        // Kangeswaran எனில் அட்மின் சலுகை வழங்கப்படும்
-        if (currentUser === 'kangeswaran') {
+        // அட்மின் மின்னஞ்சல் சரிபார்ப்பு (உதாரணமாக உங்கள் மின்னஞ்சலை இங்கே கொடுக்கலாம்)
+        if (currentUser === 'kangeswaran@gmail.com' || currentUser.includes('kangeswaran')) {
             adminBadge.style.display = 'inline-block';
         } else {
             adminBadge.style.display = 'none';
         }
-        renderTasks();
+        fetchTasks();
     }
 
-    function logout() {
-        localStorage.removeItem('office_user');
-        currentUser = null;
+    function showAuth() {
         authSection.style.display = 'block';
         appSection.style.display = 'none';
-        usernameInput.value = '';
+        emailInput.value = '';
         passwordInput.value = '';
     }
 
+    function logout() {
+        auth.signOut();
+    }
+
+    // Firestore-ல் இருந்து தரவுகளைப் பெறுதல்
+    function fetchTasks() {
+        db.collection("tasks").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
+            tasks = [];
+            snapshot.forEach((doc) => {
+                tasks.push({ id: doc.id, ...doc.data() });
+            });
+            renderTasks();
+        });
+    }
+
+    // புதிய டாஸ்க் சேமித்தல் அல்லது புதுப்பித்தல்
     taskForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const idInput = document.getElementById('task-id-input').value;
@@ -320,22 +361,25 @@
             fileType = file.type;
         }
 
+        const isAdmin = currentUser.includes('kangeswaran');
+
         if (idInput) {
-            const task = tasks.find(t => t.id == idInput);
-            if (task && (task.user === currentUser || currentUser === 'kangeswaran')) {
-                task.title = title;
-                task.desc = desc;
-                task.status = status;
-                if (mediaUrl) {
-                    task.mediaUrl = mediaUrl;
-                    task.fileName = fileName;
-                    task.fileType = fileType;
-                }
-                task.date = new Date().toLocaleString() + ' (Updated)';
+            // Update existing task
+            const taskUpdateData = { title, desc, status, date: new Date().toLocaleString() + ' (Updated)' };
+            if (mediaUrl) {
+                taskUpdateData.mediaUrl = mediaUrl;
+                taskUpdateData.fileName = fileName;
+                taskUpdateData.fileType = fileType;
             }
+            db.collection("tasks").doc(idInput).update(taskUpdateData)
+                .then(() => {
+                    taskForm.reset();
+                    document.getElementById('task-id-input').value = '';
+                    document.getElementById('save-task-btn').textContent = 'பதியவும்';
+                });
         } else {
+            // Add new task
             const newTask = {
-                id: Date.now(),
                 user: currentUser,
                 title,
                 desc,
@@ -343,16 +387,14 @@
                 mediaUrl,
                 fileName,
                 fileType,
-                date: new Date().toLocaleString()
+                date: new Date().toLocaleString(),
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
             };
-            tasks.unshift(newTask);
+            db.collection("tasks").add(newTask)
+                .then(() => {
+                    taskForm.reset();
+                });
         }
-
-        localStorage.setItem('office_tasks', JSON.stringify(tasks));
-        taskForm.reset();
-        document.getElementById('task-id-input').value = '';
-        document.getElementById('save-task-btn').textContent = 'பதியவும்';
-        renderTasks();
     });
 
     function convertBase64(file) {
@@ -379,8 +421,9 @@
     function renderTasks() {
         taskList.innerHTML = '';
         
+        const isAdmin = currentUser.includes('kangeswaran');
         let filteredTasks = tasks;
-        if (currentUser !== 'kangeswaran') {
+        if (!isAdmin) {
             filteredTasks = tasks.filter(task => task.user === currentUser);
         }
 
@@ -399,12 +442,12 @@
 
             let mediaHtml = '';
             if (task.mediaUrl) {
-                if (task.fileType.startsWith('image/')) {
+                if (task.fileType && task.fileType.startsWith('image/')) {
                     mediaHtml = `<img src="${task.mediaUrl}" class="media-preview" alt="ஆதாரம்">`;
-                } else if (task.fileType.startsWith('video/')) {
+                } else if (task.fileType && task.fileType.startsWith('video/')) {
                     mediaHtml = `<video src="${task.mediaUrl}" class="media-preview" controls></video>`;
                 } else {
-                    if (currentUser === 'kangeswaran') {
+                    if (isAdmin) {
                         mediaHtml = `<div style="margin-top: 10px;">
                             <p><b>இணைக்கப்பட்ட கோப்பு:</b> ${task.fileName}</p>
                             <a href="${task.mediaUrl}" download="${task.fileName}" class="download-btn">கோப்பைப் பதிவிறக்கவும்</a>
@@ -418,8 +461,8 @@
             }
 
             let editBtnHtml = '';
-            if (task.user === currentUser || currentUser === 'kangeswaran') {
-                editBtnHtml = `<button onclick="editTask(${task.id})" style="padding: 6px 12px; font-size: 12px; margin-top: 10px; background-color: var(--secondary);">மாற்றுக / அப்டேட் செய்க</button>`;
+            if (task.user === currentUser || isAdmin) {
+                editBtnHtml = `<button onclick="editTask('${task.id}')" style="padding: 6px 12px; font-size: 12px; margin-top: 10px; background-color: var(--secondary);">மாற்றுக / அப்டேட் செய்க</button>`;
             }
 
             card.innerHTML = `
