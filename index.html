@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>அலுவலக பணி கண்காணிப்பு செயலி</title>
+    <title>Technical College, Batticaloa - பணி கண்காணிப்பு செயலி</title>
     
     <!-- Firebase App (Core) SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -40,6 +40,39 @@
             margin: 0 auto;
         }
 
+        /* Header Styles with College Name and Logo */
+        .main-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card);
+            padding: 15px 25px;
+            border-radius: var(--radius);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+
+        .college-title h2 {
+            margin: 0;
+            color: var(--primary);
+            font-size: 22px;
+        }
+
+        .college-title p {
+            margin: 3px 0 0 0;
+            color: var(--secondary);
+            font-size: 13px;
+        }
+
+        .header-logo {
+            width: 55px;
+            height: 55px;
+            object-fit: contain;
+            border-radius: 50%;
+            background: #f1f5f9;
+            padding: 2px;
+        }
+
         .card {
             background: var(--card);
             padding: 25px;
@@ -48,7 +81,7 @@
             margin-bottom: 20px;
         }
 
-        h1, h2 {
+        h1 {
             text-align: center;
             color: var(--primary);
         }
@@ -167,6 +200,16 @@
 <body>
 
 <div class="container">
+    <!-- Header with College Name and Logo -->
+    <header class="main-header">
+        <div class="college-title">
+            <h2>Technical College, Batticaloa</h2>
+            <p>அலுவலக பணி கண்காணிப்பு செயலி</p>
+        </div>
+        <!-- இங்கே logo.png என்ற பெயரில் உங்கள் லோகோ படத்தை GitHub ரெபாசிட்டரியில் வைக்கவும் -->
+        <img src="logo.png" alt="College Logo" class="header-logo" onerror="this.style.display='none'">
+    </header>
+
     <!-- Auth Section -->
     <div id="auth-section" class="card">
         <h2 id="auth-mode-title">பணியாளர் உள்நுழைவு</h2>
@@ -225,13 +268,13 @@
 <script>
     // உங்கள் Firebase உள்ளமைவு விவரங்கள்
     const firebaseConfig = {
-  apiKey: "AIzaSyAXhj3sBdf-mZPQtnhW8O64Z5pGfK1RxoM",
-  authDomain: "techbatti.firebaseapp.com",
-  projectId: "techbatti",
-  storageBucket: "techbatti.firebasestorage.app",
-  messagingSenderId: "820329640597",
-  appId: "1:820329640597:web:2ed5e17b8774c125c4219c"
-};
+        apiKey: "AIzaSyAXhj3s8df-mZPQtnhW8064Z5pGfK1RxoM",
+        authDomain: "techbatti.firebaseapp.com",
+        projectId: "techbatti",
+        storageBucket: "techbatti.firebasestorage.app",
+        messagingSenderId: "820329640597",
+        appId: "1:820329640597:web:2ed5e17b8774c125c4219c"
+    };
 
     // Firebase ஆரம்பிக்கப்படுகிறது
     firebase.initializeApp(firebaseConfig);
@@ -258,7 +301,6 @@
     // பயனர் நிலை மாறும்போது இயங்கும்
     auth.onAuthStateChanged((user) => {
         if (user) {
-            // மின்னஞ்சலில் இருந்து யூசர்நேமை மட்டும் பிரித்து எடுத்தல்
             currentUser = user.email.split('@')[0];
             showApp();
         } else {
@@ -281,7 +323,7 @@
         }
     });
 
-    // Login மற்றும் Register செயல்பாடு (Username-ஐ Email-ஆக மாற்றி ஃபயர்பேஸுக்கு அனுப்புதல்)
+    // Login மற்றும் Register செயல்பாடு
     authForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const username = usernameInput.value.trim().toLowerCase();
@@ -312,7 +354,6 @@
         appSection.style.display = 'block';
         currentUserDisplay.textContent = currentUser;
         
-        // அட்மின் பெயர் சரிபார்ப்பு (உதாரணமாக உங்கள் பெயரை இங்கே கொடுக்கலாம்)
         if (currentUser === 'kangeswaran') {
             adminBadge.style.display = 'inline-block';
         } else {
@@ -436,7 +477,7 @@
             
             let badgeText = 'நிலுவையில்';
             if (task.status === 'in-progress') badgeText = 'நடைபெறுகிறது';
-            if (task.status === 'completed') badgeText  = 'முடிவடைந்தது';
+            if (task.status === 'completed') badgeText = 'முடிவடைந்தது';
 
             let mediaHtml = '';
             if (task.mediaUrl) {
@@ -456,7 +497,7 @@
                 }
             }
 
-            let editBtnHtml = '';
+            let editBtnHtml = ``;
             if (task.user === currentUser || isAdmin) {
                 editBtnHtml = `<button onclick="editTask('${task.id}')" style="padding: 6px 12px; font-size: 12px; margin-top: 10px; background-color: var(--secondary);">மாற்றுக / அப்டேட் செய்க</button>`;
             }
